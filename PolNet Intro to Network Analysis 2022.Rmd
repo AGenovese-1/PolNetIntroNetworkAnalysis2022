@@ -5,7 +5,8 @@ date: '2022-06-13'
 output: html_document
 ---
 
-# Terms
+# Session 1
+## Terms
 
 * Network: A collection of **nodes** joined by **edges**
   
@@ -31,7 +32,7 @@ output: html_document
   
   
 
-# iGraph R
+## iGraph R
 ```{r iGraph Setup, include=FALSE}
 library(igraph)
 library(rio)
@@ -167,7 +168,7 @@ plot(atop1997und,
      layout=layout_with_kk)
 
 ```
-# Statnet R
+## Statnet R
 ```{r Statnet Setup, include=FALSE}
 detach("package:igraph", unload = TRUE)
 library(statnet)
@@ -238,7 +239,10 @@ plot(netweighted,
 
 
 ```
-# Network statistics
+
+
+# Session 2
+## Network statistics
 
 ## Network Density
 * Density refers to the proportion of ties in a network that are actually present
@@ -292,7 +296,7 @@ plot(netweighted,
 
 
 
-# Network statistics and centrality R
+## Network statistics and centrality R
 ```{r Network Statistics and Centrality Statnet, eval=FALSE, include=FALSE}
 # Calculate Network Statistics
 
@@ -301,7 +305,7 @@ summary(net_statnet ~ edges)
 atopnet<-network(atop1997_dat, matrix.type="edgelist")
 summary(atopnet ~ edges+triangles)
 ```
-```{r Network Statistics and Centrality iGraph}
+```{r Network Statistics and Centrality iGraph, include=FALSE}
 ## Using igraph
 detach("package:statnet", unload = TRUE)
 library(igraph)
@@ -390,9 +394,100 @@ closeness(atop1997und)
 ```
 
 
+# Session 3
+## Networks including negative ties
+### Examples:
+* The friend of my friend is my friend
+* The friend of my enemy is my enemy 
+* The enemy of my friend is my enemy
+* The enemy of my enemy is my friend
+* Cognitive units or entities tend to attain balance, "a situation in which the perceived units and the experienced sentiments co-exist without stress"
+  + Is this a common pattern in individuals?
+  + How about countries?
+  
+## Negative Centrality
+* Focus on A
+* "The recipient of a negative tie would be less affected by receiving a negative tie from an actor who gave out a lot of negative ties than if they were the sole recipient of a negative tie from an actor that only gave one negative tie."
+* $PN = (I - \frac{1}{2n-2}A)^{-1}1$
+  + A=P-2N, P denotes a positive tie matrix and N denotes a negative tie matrix.
+  + If both positive and negative ties are possible, then it ranges from -1 to 2.
+
+```{r}
+library(signnet)
+
+pndata <- import("pndata.xlsx")
+pnnet <- graph_from_data_frame(pndata, directed=F)
+
+pnnet
+E(pnnet)$sign
+
+plot(pnnet,
+     vertex.label.color="black",
+     vertex.frame.color="black", 
+     vertex.color="gray",
+     edge.width=2,
+     edge.color=ifelse(E(pnnet)$sign==-1, "darkred", "navy"))
+
+### Number of triangles
+count_signed_triangles(pnnet)
+
+### Balanced?
+balance_score(pnnet, method = "triangles") ##Aref&Wilson (2018):0 to 1
+
+## Degree centrality
+degree_signed(pnnet, type = "pos")
+degree_signed(pnnet, type = "neg")
+degree_signed(pnnet, type = "ratio")
+degree_signed(pnnet, type = "net")
 
 
+## Positive and negative centrality
+pn_index(pnnet) # range: -1 to 2
+
+## All positive ties
+pnnet2 <- graph_from_data_frame(pndata, directed=F)
+E(pnnet2)$sign <- 1
+pn_index(pnnet2) # range: 1 to 2
+
+## All negative ties
+pnnet3 <- graph_from_data_frame(pndata, directed=F)
+E(pnnet3)$sign <- -1
+pn_index(pnnet3) # range: 0 to 1
+
+## Real data: rivalry and alliance in the Middle East
+
+pnnet_me <- import("rivdefme1980.csv")
+head(pnnet_me)
+
+pnnet_1980 <-graph_from_data_frame(d=pnnet_me, directed=F)
+E(pnnet_1980)$color <- ifelse(E(pnnet_1980)$sign==-1, "darkred", "navy") 
+
+plot(pnnet_1980,
+     edge.color=E(pnnet_1980)$color,
+     edge.width=1.5,
+     vertex.size=4, 
+     vertex.frame.color="gray", 
+     vertex.color="white",
+     vertex.label.cex=0.8, 
+     vertex.label.color="black",
+     vertex.label.dist=1,
+     layout=layout_with_kk,
+     main="1980")
+
+### Number of triangles
+count_signed_triangles(pnnet_1980)
+
+### Balanced?
+balance_score(pnnet_1980, method = "triangles") ##Aref&Wilson (2018):0 to 1
+
+## Degree centrality
+degree_signed(pnnet_1980, type = "pos")
+degree_signed(pnnet_1980, type = "neg")
+degree_signed(pnnet_1980, type = "ratio")
+degree_signed(pnnet_1980, type = "net")
 
 
+## Positive and negative centrality
+pn_index(pnnet_1980) # range: -1 to 2
 
-
+```
